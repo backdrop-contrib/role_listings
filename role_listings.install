@@ -1,0 +1,66 @@
+<?php
+/**
+ * @file
+ * Install, update and uninstall functions for the role_listings module.
+ *
+ */
+
+
+/**
+ * Convert Role Listings variables to configuration settings.
+ */
+function role_listings_update_1000() {
+  $config = config('role_listings.settings');
+  $config->set('role_listings_max', update_variable_get('role_listings_max', '15'));
+  $config->save();
+  update_variable_del('role_listings_max');
+}
+
+
+/**
+ * Handle old views that have already been converted by views_update_1001.
+ */
+function role_listings_update_1001() {
+  // Delete view 'user_by_role' because it's no longer needed.
+  config('views.view.users_by_role')->delete();
+
+  // If upgrading from D7 role_listings module, View 'role_listings' was
+  // converted by views_update_1001 but it has broken handlers due to the
+  // conversion from rid to role_name, so we'll force re-loading the rebuilt
+  // view from the module file, then copy over the old filter values.
+
+  $display = config_get('views.view.users_special', 'display');
+  if (isset($display['default']['display_options']['filters']['rid']['value'])) {
+    $filter_value = $display['default']['display_options']['filters']['rid']['value'];
+    config('views.view.users_special')->delete();
+
+    config_install_default_config('role_listings');
+    $display = config_get('views.view.users_special', 'display');
+    $display['default']['display_options']['filters']['role']['value'] = $filter_value;
+    config_set('views.view.users_special', 'display', $display);
+  }
+}
+
+
+/**
+ * Implements hook_update_dependencies().
+ *
+ * Run our update_1001 after Views has converted existing views to config so
+ * that we can delete the config files (which contain broken handlers) and then
+ * re-load the view from the module.
+ *
+ * @see views_update_1001().
+ */
+function role_listings_update_dependencies() {
+  $dependencies['role_listings'][1001] = array(
+    'views' => 1001,
+  );
+}
+
+
+/**
+ * Implements hook_uninstall().
+ */
+function role_listings_uninstall() {
+  config('views.view.users_special')->delete();
+}

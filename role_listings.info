@@ -1,0 +1,5 @@
+name = Role Listings
+description = Add administrative menu items for each role.
+package = Other
+backdrop = 1.x
+type = module
