@@ -29,10 +29,9 @@ function role_listings_settings_form($form, &$form_state) {
 function role_listings_display() {
   $max = config_get('role_listings.settings', 'role_listings_max');
   $build[] = array(
+    '#type' => 'help',
     '#markup' => t('These are the roles (beyond the two default roles) and the user accounts (up to @max users <a href="/admin/config/people/role-listings">[change limit]</a>) that have that role.',
       array('@max' => $max)),
-    '#prefix' => '<p>',
-    '#suffix' => '</p>',
   );
 
   $header = array(
