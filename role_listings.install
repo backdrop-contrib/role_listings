@@ -5,6 +5,25 @@
  *
  */
 
+ /**
+  * Implements hook_enable().
+  */
+function role_listings_enable() {
+  $role_names = backdrop_map_assoc(array_keys(user_roles(TRUE)));
+
+  // Initialize config variables to use all possible roles.
+  $config = config('role_listings.settings');
+  $config->set('permissions_pages', $role_names);
+  unset($role_names['authenticated']);
+  $config->set('role_users', $role_names);
+  $config->set('special_role_users', $role_names);
+  $config->save();
+
+  // Load up the new view and set its values to include all roles.
+  $view = views_get_view('role_user_accounts');
+  _role_listings_set_special_roles($role_names);
+}
+
 /**
  * Convert Role Listings variables to configuration settings.
  */
@@ -45,12 +64,14 @@ function role_listings_update_1001() {
 function role_listings_update_1002() {
   $role_names = backdrop_map_assoc(array_keys(user_roles(TRUE)));
 
+  // Initialize config variables to use all possible roles.
   $config = config('role_listings.settings');
   $config->set('permissions_pages', $role_names);
-
   unset($role_names['authenticated']);
   $config->set('role_users', $role_names);
   $config->set('special_role_users', $role_names);
+
+  // Also clear the old config variable that we no longer use.
   $config->clear('role_listings_max');
   $config->save();
 
@@ -77,11 +98,4 @@ function role_listings_update_dependencies() {
   $dependencies['role_listings'][1001] = array(
     'views' => 1001,
   );
-}
-
-/**
- * Implements hook_uninstall().
- */
-function role_listings_uninstall() {
-  config('views.view.users_special')->delete();
 }
