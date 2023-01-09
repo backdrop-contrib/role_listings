@@ -30,19 +30,19 @@ function role_listings_settings_form($form, &$form_state) {
     '#type' => 'fieldset',
     '#title' => t('User lists'),
   );
-  $form['user_lists']['role_users'] = array(
-    '#type' => 'checkboxes',
-    '#title' => t('Show role users'),
-    '#description' => t('Show individual lists of users who have each of the checked roles.'),
-    '#options' => $extra_user_roles,
-    '#default_value' => config_get('role_listings.settings', 'role_users'),
-  );
   $form['user_lists']['special_role_users'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Show special role users'),
     '#description' => t('Show a list of users who have any of these roles. If no roles are checked, this page will not be shown.'),
     '#options' => $extra_user_roles,
     '#default_value' => config_get('role_listings.settings', 'special_role_users'),
+  );
+  $form['user_lists']['role_users'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Show individual role users'),
+    '#description' => t('Show individual lists of users who have each of the checked roles.'),
+    '#options' => $extra_user_roles,
+    '#default_value' => config_get('role_listings.settings', 'role_users'),
   );
 
   $form = system_settings_form($form);

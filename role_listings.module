@@ -58,28 +58,7 @@ function role_listings_menu() {
         'weight' => $weight++,
         'type' => MENU_DEFAULT_LOCAL_TASK,
       );
-      // Add parent tab that displays this item
-      $items['admin/people/role-users'] = array(
-        'title' => 'Accounts by role',
-        'description' => 'Users with particular roles.',
-        'page callback' => 'role_listings_special_role_users_view',
-        'file' => 'role_listings.admin.inc',
-        'access arguments' => array('administer users'),
-        'type' => MENU_LOCAL_TASK,
-      );
-    }
-    else {
-      // There's no "Special roles" page, so parent tab goes to first role page.
-      $role_name = array_keys($role_users)[0];
-      $items['admin/people/role-users'] = array(
-        'title' => 'Accounts by role',
-        'description' => 'Users with particular roles.',
-        'page callback' => 'backdrop_goto',
-        'page arguments' => array("admin/people/role-users/$role_name"),
-        'file' => 'role_listings.admin.inc',
-        'access arguments' => array('administer users'),
-        'type' => MENU_LOCAL_TASK,
-      );
+      $parent_dest = 'admin/people/role-users/special-roles';
     }
     foreach ($role_users as $role_name) {
       $role_label = $roles[$role_name];
@@ -91,9 +70,22 @@ function role_listings_menu() {
         'file' => 'role_listings.admin.inc',
         'access arguments' => array('administer users'),
         'weight' => $weight++,
-        'type' => $weight == 1 ? MENU_DEFAULT_LOCAL_TASK : MENU_LOCAL_TASK,
+        'type' => isset($parent_dest) ? MENU_LOCAL_TASK : MENU_DEFAULT_LOCAL_TASK,
       );
+      if (!isset($parent_dest)) {
+        $parent_dest = "admin/people/role-users/$role_name";
+      }
     }
+    // Create the parent tab that redirects to the default sub-tab.
+    $items['admin/people/role-users'] = array(
+      'title' => 'Accounts by role',
+      'description' => 'Users with particular roles.',
+      'page callback' => 'backdrop_goto',
+      'page arguments' => array($parent_dest),
+      'file' => 'role_listings.admin.inc',
+      'access arguments' => array('administer users'),
+      'type' => MENU_LOCAL_TASK,
+    );
   }
 
   return $items;
