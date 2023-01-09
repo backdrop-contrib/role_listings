@@ -11,7 +11,6 @@ function role_listings_menu() {
   $items = array();
 
   // Configuration page
-
   $items['admin/config/people/role-listings'] = array(
     'title' => 'Role listings',
     'description' => 'Configure the number of users to display in role listings.',
@@ -22,62 +21,82 @@ function role_listings_menu() {
     'type' => MENU_NORMAL_ITEM,
   );
 
-  // Overview page
-
-  $items["admin/people/role-users"] = array(
-    'title' => 'Role users',
-    'description' => 'List all roles and the users with that role.',
-    'page callback' => 'role_listings_display',
-    'file' => 'role_listings.admin.inc',
-    'access arguments' => array('administer users'),
-    'type' => MENU_LOCAL_TASK,
-  );
-
-  // Add users-by-role for each role. Since the main user management page lets
-  // us filter by role in Backdrop, we'll simply redirect to that page with the
-  // appropriate filter query.
-
-  $weight = 0;
-  $roles = user_roles();
-  unset($roles[BACKDROP_ANONYMOUS_ROLE]);
-  foreach ($roles as $role_name => $role_label) {
-    $items["admin/people/role-users/$role_name"] = array(
-      'title' => check_plain($role_label),
-      'description' => format_string('List all users with role %role',
-        array('%role' => $role_name)),
-      'page callback' => 'backdrop_goto',
-      'page arguments' => array("admin/people",
-        $role_name == BACKDROP_AUTHENTICATED_ROLE ?
-        array() : array('query' => array('role' => $role_name))),
-      'access arguments' => array('administer users'),
-      'weight' => $weight++,
-      'type' => MENU_LOCAL_TASK,
-    );
-  }
-
-  // Special Roles (admin/people/role-users/special-roles) provided by a View.
-
   // Add permissions-by-role for each role. Note that we have to give the new
   // menu item a distinct path to avoid infinite loop.
+  $permissions_pages = config_get('role_listings.settings', 'permissions_pages');
+  if (!empty($permissions_pages)) {
+    $weight = 0;
+    $roles = user_roles();
+    foreach ($permissions_pages as $role_name) {
+      $role_label = $roles[$role_name];
+      $items["admin/config/people/permissions/by-role-$role_name"] = array(
+        'title' => check_plain($role_label),
+        'description' => format_string('Configure permissions for role %role',
+          array('%role' => $role_name)),
+        'page callback' => 'backdrop_goto',
+        'page arguments' => array("admin/config/people/permissions/$role_name"),
+        'access arguments' => array('administer permissions'),
+        'weight' => $weight++,
+        'type' => MENU_LOCAL_TASK,
+      );
+    }
+  }
 
-  $weight = 0;
-  $roles = user_roles();
-  foreach ($roles as $role_name => $role_label) {
-    $items["admin/config/people/permissions/by-role-$role_name"] = array(
-      'title' => check_plain($role_label),
-      'description' => format_string('Configure permissions for role %role',
-        array('%role' => $role_name)),
-      'page callback' => 'backdrop_goto',
-      'page arguments' => array("admin/config/people/permissions/$role_name"),
-      'access arguments' => array('administer permissions'),
-      'weight' => $weight++,
-      'type' => MENU_LOCAL_TASK,
-    );
+  // Create menu items for the pages that display lists of users by role.
+  $special_role_users = config_get('role_listings.settings', 'special_role_users');
+  $role_users = config_get('role_listings.settings', 'role_users');
+  if (!empty($special_role_users) && !empty($role_users)) {
+    $role_user_items = array();
+    $weight = 0;
+    // Build a list of subtab items for all of the specified roles.
+    if (!empty($special_role_users)) {
+      $role_user_items["admin/people/role-users/special-roles"] = array(
+        'title' => 'Special roles',
+        'description' => 'All users with one of the special roles.',
+        'page callback' => 'role_listings_special_role_users_view',
+        'file' => 'role_listings.admin.inc',
+        'access arguments' => array('administer users'),
+        'weight' => $weight++,
+        'type' => MENU_LOCAL_TASK,
+      );
+    }
+    foreach ($role_users as $role_name) {
+      $role_label = $roles[$role_name];
+      $role_user_items["admin/people/role-users/$role_name"] = array(
+        'title' => check_plain($role_label),
+        'description' => format_string('List all users with role %role', array('%role' => $role_name)),
+        'page callback' => 'role_listings_role_users_view',
+        'page arguments' => array(3),
+        'file' => 'role_listings.admin.inc',
+        'access arguments' => array('administer users'),
+        'weight' => $weight++,
+        'type' => MENU_LOCAL_TASK,
+      );
+    }
+    $first_key = array_keys($role_user_items)[0];
+    $role_user_items['admin/people/role-users'] = $role_user_items[$first_key];
+    $role_user_items[$first_key]['type'] = MENU_DEFAULT_LOCAL_TASK;
+    $items += $role_user_items;
   }
 
   return $items;
 }
 
+/**
+ * Update the "Special roles" display of the view to filter to a specified list
+ * of roles.
+ */
+function _role_listings_set_special_roles($role_names) {
+  $user_roles = user_roles();
+  $view = views_get_view('role_user_accounts');
+  $role_labels = array();
+  foreach ($role_names as $role_name) {
+    $role_labels[] = $user_roles[$role_name];
+  }
+  $view->display['special']->display_options['header']['area']['content'] = '<p>' . t('These users have one or more of these roles: @role_labels.', array('@role_labels' => implode(', ', $role_labels))) . '<p>';
+  $view->display['special']->display_options['filters']['role']['value'] = $role_names;
+  $view->save();
+}
 
 /**
  * Implements hook_config_info().
@@ -87,8 +106,8 @@ function role_listings_config_info() {
     'label' => t('Role Listings settings'),
     'group' => t('Configuration'),
   );
-  $prefixes['views.view.users_special'] = array(
-    'label' => t('Special Roles'),
+  $prefixes['views.view.role_user_accounts'] = array(
+    'label' => t('Roles user pages'),
     'group' => t('Views'),
   );
   return $prefixes;

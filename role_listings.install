@@ -5,7 +5,6 @@
  *
  */
 
-
 /**
  * Convert Role Listings variables to configuration settings.
  */
@@ -15,7 +14,6 @@ function role_listings_update_1000() {
   $config->save();
   update_variable_del('role_listings_max');
 }
-
 
 /**
  * Handle old views that have already been converted by views_update_1001.
@@ -41,6 +39,30 @@ function role_listings_update_1001() {
   }
 }
 
+/**
+ * Convert role listings to new config variables and Views.
+ */
+function role_listings_update_1002() {
+  $role_names = backdrop_map_assoc(array_keys(user_roles(TRUE)));
+
+  $config = config('role_listings.settings');
+  $config->set('permissions_pages', $role_names);
+
+  unset($role_names['authenticated']);
+  $config->set('role_users', $role_names);
+  $config->set('special_role_users', $role_names);
+  $config->clear('role_listings_max');
+  $config->save();
+
+  // Load up the new view and set its values to include all roles.
+  config_install_default_config('role_listings', 'views.view.role_user_accounts');
+  $view = views_get_view('role_user_accounts');
+  _role_listings_set_special_roles($role_names);
+
+  // Get rid of the old view.
+  $view = views_get_view('users_special');
+  $view->delete();
+}
 
 /**
  * Implements hook_update_dependencies().
@@ -56,7 +78,6 @@ function role_listings_update_dependencies() {
     'views' => 1001,
   );
 }
-
 
 /**
  * Implements hook_uninstall().
