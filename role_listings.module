@@ -23,7 +23,7 @@ function role_listings_menu() {
 
   // Add permissions-by-role for each role. Note that we have to give the new
   // menu item a distinct path to avoid infinite loop.
-  $permissions_pages = config_get('role_listings.settings', 'permissions_pages');
+  $permissions_pages = array_filter(config_get('role_listings.settings', 'permissions_pages'));
   if (!empty($permissions_pages)) {
     $weight = 0;
     $roles = user_roles();
@@ -43,26 +43,45 @@ function role_listings_menu() {
   }
 
   // Create menu items for the pages that display lists of users by role.
-  $special_role_users = config_get('role_listings.settings', 'special_role_users');
-  $role_users = config_get('role_listings.settings', 'role_users');
-  if (!empty($special_role_users) && !empty($role_users)) {
-    $role_user_items = array();
+  $special_role_users = array_filter(config_get('role_listings.settings', 'special_role_users'));
+  $role_users = array_filter(config_get('role_listings.settings', 'role_users'));
+  if (!empty($special_role_users) || !empty($role_users)) {
     $weight = 0;
     // Build a list of subtab items for all of the specified roles.
     if (!empty($special_role_users)) {
-      $role_user_items["admin/people/role-users/special-roles"] = array(
+      $items['admin/people/role-users/special-roles'] = array(
         'title' => 'Special roles',
         'description' => 'All users with one of the special roles.',
         'page callback' => 'role_listings_special_role_users_view',
         'file' => 'role_listings.admin.inc',
         'access arguments' => array('administer users'),
         'weight' => $weight++,
+        'type' => MENU_DEFAULT_LOCAL_TASK,
+      );
+      $items['admin/people/role-users'] = array(
+        'title' => 'Accounts by role',
+        'description' => 'All users with particular roles.',
+        'page callback' => 'role_listings_special_role_users_view',
+        'file' => 'role_listings.admin.inc',
+        'access arguments' => array('administer users'),
+        'type' => MENU_LOCAL_TASK,
+      );
+    }
+    else {
+      $role_name = array_keys($role_users)[0];
+      $items['admin/people/role-users'] = array(
+        'title' => 'Accounts by role',
+        'description' => 'Users with a particular role.',
+        'page callback' => 'backdrop_goto',
+        'page arguments' => array("admin/people/role-users/$role_name"),
+        'file' => 'role_listings.admin.inc',
+        'access arguments' => array('administer users'),
         'type' => MENU_LOCAL_TASK,
       );
     }
     foreach ($role_users as $role_name) {
       $role_label = $roles[$role_name];
-      $role_user_items["admin/people/role-users/$role_name"] = array(
+      $items["admin/people/role-users/$role_name"] = array(
         'title' => check_plain($role_label),
         'description' => format_string('List all users with role %role', array('%role' => $role_name)),
         'page callback' => 'role_listings_role_users_view',
@@ -70,13 +89,9 @@ function role_listings_menu() {
         'file' => 'role_listings.admin.inc',
         'access arguments' => array('administer users'),
         'weight' => $weight++,
-        'type' => MENU_LOCAL_TASK,
+        'type' => $weight == 1 ? MENU_DEFAULT_LOCAL_TASK : MENU_LOCAL_TASK,
       );
     }
-    $first_key = array_keys($role_user_items)[0];
-    $role_user_items['admin/people/role-users'] = $role_user_items[$first_key];
-    $role_user_items[$first_key]['type'] = MENU_DEFAULT_LOCAL_TASK;
-    $items += $role_user_items;
   }
 
   return $items;

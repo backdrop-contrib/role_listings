@@ -63,6 +63,7 @@ function role_listings_settings_form_submit_extra($form, &$form_state) {
  * Returns a display of the users with special roles.
  */
 function role_listings_special_role_users_view() {
+  backdrop_set_title(t('User accounts: Special roles'));
   $view = views_get_view('role_user_accounts');
   return $view->preview('special');
 }
@@ -71,6 +72,8 @@ function role_listings_special_role_users_view() {
  * Returns a display of the users with a specific role.
  */
 function role_listings_role_users_view($role_name) {
+  $user_roles = user_roles();
+  backdrop_set_title(t('User accounts: @role_label', array('@role_label' => $user_roles[$role_name])));
   $view = views_get_view('role_user_accounts');
   return $view->preview('by_role', array($role_name));
 }
