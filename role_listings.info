@@ -3,4 +3,5 @@ description = Add administrative menu items for each role.
 package = Other
 backdrop = 1.x
 type = module
+
 configure = admin/config/people/role-listings

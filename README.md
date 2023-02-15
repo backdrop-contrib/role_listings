@@ -3,9 +3,16 @@ Role Listings
 
 This module adds listings for individual roles to the administration pages, specifically:
 
-* All extra roles and their users at /admin/people/role-users
-* Individual pages listing all users for each role as sub-tabs of the above
 * Individual role permission pages as tabs of /admin/config/people/permissions
+
+Lists of users who have particular roles:
+
+* A page listing users with any of a specified set of roles.
+* Individual pages listing all users for selected individual roles.
+
+On Backdrop, the User accounts listing at admin/people allows you to filter by role, so the individual role lists aren't strictly necessary, but it can be useful to have them directly accessible as tabs.
+
+All of the pages above can be turned on or off on the configuration page for this module.
 
 Installation
 ------------
@@ -13,12 +20,15 @@ Installation
 - Install this module using [the official Backdrop CMS instructions](  https://backdropcms.org/guide/modules).
 
 - Visit the configuration page under Administration > Configuration > User accounts >
-  Role Listings (admin/config/people/role-listings) to set the maximum number of users to list for any role.
+  Role Listings (admin/config/people/role-listings) to specify
+  - the roles to receive individual permissions pages,
+  - the roles in the "Special roles" list, and/or
+  - to turn on or off the display of individual role listings of users.
 
-Documentation
+Related Modules
 -------------
 
-Additional documentation is located in [the Wiki](https://github.com/backdrop-contrib/role_listings/wiki/Documentation).
+- The [Filter Permissions](https://backdropcms.org/project/filter_perms) module provides a similar function for permissions pages, allowing filtering of permissions by role and/or by module. (In Backdrop 1.24.x and higher, filtering by keyword is provided by Backdrop core).
 
 Issues
 ------
